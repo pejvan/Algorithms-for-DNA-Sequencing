@@ -129,7 +129,7 @@ def question3(genome):
     print """What is the offset of the leftmost occurrence of ACTAAGT or its reverse complement in the 
     Lambda virus genome? E.g. if the leftmost occurrence of ACTAAGT is at offset 40 (0-based) and the 
     leftmost occurrence of its reverse complement ACTTAGT is at offset 29, then report 29."""
-    print occurrences[0]
+    print min(occurrences)
 
 def question4(genome):
     p = 'AGTCGA'
@@ -139,7 +139,7 @@ def question4(genome):
     print """What is the offset of the leftmost occurrence of ACTAAGT or its reverse complement in the 
     Lambda virus genome? E.g. if the leftmost occurrence of ACTAAGT is at offset 40 (0-based) and the 
     leftmost occurrence of its reverse complement ACTTAGT is at offset 29, then report 29."""
-    print occurrences[0]
+    print min(occurrences)
 
 def example10():
     """naive_2mm('ACTTTA', 'ACTTACTTGATAAAGT') should return the list [0, 4]."""
@@ -150,7 +150,7 @@ def example11():
     ten_as = 'AAAAAAAAAA'
     t = ten_as + 'CTGT' + ten_as + 'CTTT' + ten_as + 'CGGG' + ten_as
     occurrences = naive_2mm(p, t)
-    print(occurrences)
+    #print(occurrences)
     assert(occurrences == [10, 24, 38])
 
 def example12():
@@ -173,6 +173,56 @@ def question6(genome):
     print """What is the offset of the leftmost occurrence of AGGAGGTT in the Lambda virus genome when allowing up to 2 mismatches?"""
     print occurrences[0]
 
+def question7():
+    reads, qualities = readFastq('ERR037900_1.first1000.fastq')
+    #print qualities, len(qualities)
+    """ According to wikipedia: https://en.wikipedia.org/wiki/FASTQ_format"""
+    """  !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHI  """
+    """  0........................26...31.......40  """
+    threshold = 10
+    #print qualities[0], len(qualities[0])
+    readLength = len(qualities[0])
+    readCount = len(qualities)
+    assert(readCount == 1000)
+
+    poorQualityReads=[]
+    while len(poorQualityReads) <= 1:
+        print threshold
+        # for i in range(readLength):
+        #     qualitiesForRead=[]
+        #     for j in range(readCount):
+        #         #print i, j, qualities[j][i], ord(qualities[j][i])-33
+        #         quality = ord(qualities[j][i])-33
+        #         qualitiesForRead.append(quality)
+        #     #print qualitiesForRead
+        #     if min(qualitiesForRead) >= threshold:
+        #         poorQualityReads.append(i)
+        # threshold += -1
+        # print threshold
+
+        # for i in range(readCount):
+        #     qualitiesForRead=[]
+        #     for j in range(readLength):
+        #         #print i, j, qualities[j][i], ord(qualities[j][i])-33
+        #         quality = ord(qualities[i][j])-33
+        #         qualitiesForRead.append(quality)
+        #     #print qualitiesForRead
+        #     if min(qualitiesForRead) >= threshold:
+        #         poorQualityReads.append(j)
+        # threshold += -1
+        
+
+        for i in range(readCount):
+            qualitiesForRead=[ ord(v)-33 for v in qualities[:][i] ]
+            if max(qualitiesForRead) <= threshold:
+                print max(qualitiesForRead), qualitiesForRead, qualities[:][i]
+                poorQualityReads.append(i)
+        threshold += 1
+
+    print threshold, poorQualityReads
+
+            
+
 def main():
     example1()
     example2()
@@ -189,6 +239,8 @@ def main():
     print "All tests passed successfully for examples in set2"
     question5(genome)
     question6(genome)
+    print "Question 7:"
+    question7()
 
 if __name__ == "__main__":
     main()
