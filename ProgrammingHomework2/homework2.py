@@ -55,6 +55,20 @@ def boyer_moore_with_counts(p, p_bm, t):
         
     return occurrences, num_char_comp, num_aligments_tried
 
+def readFastq(filename):
+    sequences = []
+    qualities = []
+    with open(filename) as fh:
+        while True:
+            fh.readline()  # skip name line
+            seq = fh.readline().rstrip()  # read base sequence
+            fh.readline()  # skip placeholder line
+            qual = fh.readline().rstrip() # base quality line
+            if len(seq) == 0:
+                break
+            sequences.append(seq)
+            qualities.append(qual)
+    return sequences, qualities
 
 def example_2_1():
     from bm_preproc import BoyerMoore
@@ -74,6 +88,51 @@ def example_2_2():
     #print(boyer_moore_with_counts(p, p_bm, t))
     assert boyer_moore_with_counts(p, p_bm, t) == ([0, 19], 18, 5)
 
+def question1_and_2():
+    p = 'GGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGG'
+    reads, qualities = readFastq('chr1.GRCh38.excerpt.fasta')
+    assert len(reads) == len(qualities)
+
+    total_char_comp = 0
+    total_align_comp = 0
+
+    for t in reads:
+        occurrences, num_char_comp, num_aligments_tried = naive_with_counts(p, t)
+        total_char_comp += num_char_comp
+        total_align_comp += num_aligments_tried
+
+    """How many alignments does the naive exact matching algorithm try when matching the string 
+    GGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGG (derived from human Alu sequences) to the 
+    excerpt of human chromosome 1? (Don't consider reverse complements.)"""
+    print 'Question1: ', total_align_comp
+
+    """How many character comparisons does the naive exact matching algorithm try when matching 
+    the string GGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGG (derived from human Alu sequences) 
+    to the excerpt of human chromosome 1? (Don't consider reverse complements.)"""
+    print 'Question2: ', total_char_comp
+    
+def question3():
+    p = 'GGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGG'
+    reads, qualities = readFastq('chr1.GRCh38.excerpt.fasta')
+    assert len(reads) == len(qualities)
+
+    total_char_comp = 0
+    total_align_comp = 0
+
+    from bm_preproc import BoyerMoore
+    p_bm = BoyerMoore(p)
+    for t in reads:
+        occurrences, num_char_comp, num_aligments_tried = boyer_moore_with_counts(p, p_bm, t)
+        total_char_comp += num_char_comp
+        total_align_comp += num_aligments_tried
+
+    """How many alignments does Boyer-Moore try when matching the string 
+    GGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGG (derived from human Alu sequences) 
+    to the excerpt of human chromosome 1? (Don't consider reverse complements.)"""
+    print 'Question3: ', total_align_comp
+    #print 'Question3--: ', total_char_comp
+
+
 
 def main():
     example_1_1()
@@ -81,6 +140,9 @@ def main():
     print "All tests passed successfully for examples in set1"
     example_2_1()
     example_2_2()
+    print "All tests passed successfully for examples in set2"
+    question1_and_2()
+    question3()
    
 if __name__ == "__main__":
     main()
