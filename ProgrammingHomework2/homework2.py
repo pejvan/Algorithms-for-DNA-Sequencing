@@ -132,7 +132,101 @@ def question3():
     print 'Question3: ', total_align_comp
     #print 'Question3--: ', total_char_comp
 
+class Index(object):
+    def __init__(self, t, k):
+        ''' Create index from all substrings of size 'length' '''
+        self.k = k  # k-mer length (k)
+        self.index = []
+        for i in range(len(t) - k + 1):  # for each k-mer
+            self.index.append((t[i:i+k], i))  # add (k-mer, offset) pair
+        self.index.sort()  # alphabetize by k-mer
+    
+    def query(self, p):
+        import bisect
+        ''' Return index hits for first k-mer of P '''
+        kmer = p[:self.k]  # query with first k-mer
+        i = bisect.bisect_left(self.index, (kmer, -1))  # binary search
+        hits = []
+        while i < len(self.index):  # collect matching index entries
+            if self.index[i][0] != kmer:
+                break
+            hits.append(self.index[i][1])
+            i += 1
+        return hits
 
+def question4():
+    """Write a function that, given a length-24 pattern P and given an Index object built on 8-mers, finds all approximate occurrences of P within T with up to 2 mismatches. 
+    Insertions and deletions are not allowed. Don't consider any reverse complements.
+
+    How many times does the string GGCGCGGTGGCTCACGCCTGTAAT, which is derived from a human Alu sequence, occur with up to 2 substitutions in the excerpt of human 
+    chromosome 1? (Don't consider reverse complements here.)
+
+    - Hint 1: Multiple index hits might direct you to the same match multiple times, but be careful not to count a match more than once.
+    - Hint 2: You can check your work by comparing the output of your new function to that of the naive_2mm function implemented in the previous module."""
+
+    p = 'GGCGCGGTGGCTCACGCCTGTAAT'
+
+    #number of mistmatches = 2, so we need to split into 3 (2+1)
+    mistmatches_allowed = 2
+    num_segments_required = mistmatches_allowed + 1
+    k_mer_size = 8
+    pattern_size = 24
+
+    reads, qualities = readFastq('chr1.GRCh38.excerpt.fasta')
+    consolidated_read = ''.join([read for read in reads])
+
+    index = Index(consolidated_read, k_mer_size)
+    p_segments = [ p[i*k_mer_size:i*k_mer_size+k_mer_size] for i in range(num_segments_required) ] # = ['GGCGCGGT', 'GGCTCACG', 'CCTGTAAT']
+    #print p_segments
+
+    hits_per_segment = {} # not used
+    hit_lists = []
+    i = 0
+    index_hits = 0
+    for segment in p_segments:
+        hits = index.query(segment)
+        index_hits += 1
+        if len(hits) > 0:
+            #print segment, hits
+            hits_per_segment[segment] = hits
+            hit_lists.append(set([hit - i*k_mer_size for hit in hits]))  # we keep the starting point of the pattern in our results set for easy comparison (verification means equality)
+                                                                         # and we store them in set for easy equality check by means of intersecting the sets.
+        i += 1
+    #print hits_per_segment
+    #print hit_lists
+
+        
+    results = []
+    for i in range(len(hit_lists)):
+        # WARN: this bit here only works for numbr of mismatches = 2 as we intersect two sets for any values of mistmatches_allowed, it would lead to invalid results otherwise
+        intersect = hit_lists[i].intersection(hit_lists[(i+1)%len(hit_lists)])
+        if len(intersect) > 0 : 
+            for item in intersect:
+                results.append(item)
+    print len(results)
+    return sorted(results), index_hits
+
+# Copy paste from homework1.py
+def naive_2mm(p, t):
+    occurrences = []
+    for i in range(len(t) - len(p) + 1):  # loop over alignments
+        match = True
+        mismatches = 0
+        for j in range(len(p)):  # loop over characters
+            if t[i+j] != p[j]:  # compare characters
+                mismatches += 1
+                if mismatches > 2:
+                    match = False
+                    break
+        if match:
+            occurrences.append(i)  # all chars matched; record
+    return occurrences
+
+def question4_check():
+    p = 'GGCGCGGTGGCTCACGCCTGTAAT'
+    reads, qualities = readFastq('chr1.GRCh38.excerpt.fasta')
+    t = ''.join([read for read in reads])
+    return naive_2mm(p, t)
 
 def main():
     example_1_1()
@@ -143,6 +237,13 @@ def main():
     print "All tests passed successfully for examples in set2"
     question1_and_2()
     question3()
+    print "Question4: How many times does the string GGCGCGGTGGCTCACGCCTGTAAT, which is derived from a human Alu sequence, occur with up to 2 substitutions in the excerpt of human chromosome 1?"
+    res, num_index_hits = question4()
+    check_res = question4_check()
+    assert res == check_res
+    print "check with naive_2mm validated"
+    print "Question5: how many total index hits are there when searching for occurrences of GGCGCGGTGGCTCACGCCTGTAAT with up to 2 substitutions in the excerpt of human chromosome 1?"
+    print num_index_hits
    
 if __name__ == "__main__":
     main()
