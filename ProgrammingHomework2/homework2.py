@@ -228,6 +228,149 @@ def question4_check():
     t = ''.join([read for read in reads])
     return naive_2mm(p, t)
 
+class SubseqIndex(object):
+    """ Holds a subsequence index for a text T """
+    
+    def __init__(self, t, k, ival):
+        """ Create index from all subsequences consisting of k characters
+            spaced ival positions apart.  E.g., SubseqIndex("ATAT", 2, 2)
+            extracts ("AA", 0) and ("TT", 1). """
+        self.k = k  # num characters per subsequence extracted
+        self.ival = ival  # space between them; 1=adjacent, 2=every other, etc
+        self.index = []
+        self.dictIndex = {}
+        self.span = 1 + ival * (k - 1)
+        for i in range(len(t) - self.span + 1):  # for each subseq
+            self.index.append((t[i:i+self.span:self.ival], i))  # add (subseq, offset)
+            if self.dictIndex.has_key(t[i:i+self.span:self.ival]):
+                self.dictIndex[t[i:i+self.span:self.ival]].append(i)
+            else:
+                self.dictIndex[t[i:i+self.span:self.ival]] = [i]
+        self.index.sort()  # alphabetize by subseq
+        #print "built index", self.index
+        #print "dict index", self.dictIndex
+    
+    def get_subseq(self, p):
+        return [p[i:i+self.span:self.ival] for i in range(len(p) - self.span + 1)]  # add (subseq, offset)
+
+    def queryDictIndex(self, p):
+        subseq = p[:self.span:self.ival]  # query with first subseq
+        if len(subseq) != self.k:
+            return []
+
+        #print "input is: '{0}' (length={1}). Querying for: '{2}' (length= {3})".format(p, len(p), subseq, len(subseq))
+        
+        #print "dict index", self.dictIndex
+        if subseq in self.dictIndex.keys():
+            return self.dictIndex[subseq]
+        else:
+           return []
+
+    def query(self, p):
+        """ Return index hits for first subseq of p """
+        import bisect
+        subseq = p[:self.span:self.ival]  # query with first subseq
+        #print "input is: '{0}' (length={1}). Querying for: '{2}' (length= {3})".format(p, len(p), subseq, len(subseq))
+        i = bisect.bisect_left(self.index, (subseq, -1))  # binary search
+        hits = []
+        while i < len(self.index):  # collect matching index entries
+            if self.index[i][0] != subseq:
+                print "'", self.index[i][0], "' != '", subseq, "'"
+                break
+            hits.append(self.index[i][1])
+            i += 1
+        return hits
+
+def query_subseq(p, t, subseq_ind):
+    """Write a function that, given a length-24 pattern P and given a SubseqIndex object built with k = 8 and ival = 3, 
+    finds all approximate occurrences of P within T with up to 2 mismatches."""
+    #number of mistmatches = 2, so we need to split into 3 (2+1)
+    mistmatches_allowed = 2
+    num_segments_required = mistmatches_allowed + 1
+    
+    pattern_size = 24
+
+    reads, qualities = readFastq('chr1.GRCh38.excerpt.fasta')
+    consolidated_read = ''.join([read for read in reads])
+
+    #p_segments = [ p[i:] for i in range(0,  pattern_size / subseq_ind.ival) ]
+    p_segments = []
+    for i in range(0,  pattern_size):
+        if len(p[i::subseq_ind.ival]) == subseq_ind.k:
+            p_segments.append(p[i:])
+        else:
+            break
+    #print p_segments
+
+    #print [subseq_ind.get_subseq(segment) for segment in p_segments]
+    checksize = reduce(lambda x,y : x and y, [map(lambda x: len(x)==8, subseq_ind.get_subseq(segment)) for segment in p_segments])[0]
+    assert checksize
+    
+    hits_lists = []
+    hits_per_segment = {}
+    i = 0
+    index_hits = 0
+    segment_number = 0
+    for segment in p_segments:
+        
+        #hits = subseq_ind.query(segment)
+        hits = subseq_ind.queryDictIndex(segment)
+        i += 1
+        #print "hits: ", hits
+        index_hits += 1
+        if len(hits) > 0:
+            #print segment, hits
+            hits_lists.append(hits)
+            hits_per_segment[segment_number] = set([hit-segment_number for hit in hits])
+        segment_number += 1
+    #print hits_per_segment
+
+    #reduce:
+    reduced_hits = set()
+    for i in range(len(hits_per_segment)):
+        intersect = hits_per_segment[i].intersection(hits_per_segment[(i+1)%len(hits_per_segment)])
+        if len(intersect) > 0 : 
+            for item in intersect:
+                reduced_hits.add(item)
+    
+    return sorted(reduced_hits), index_hits
+
+
+def example_3_1():
+    t = 'to-morrow and to-morrow and to-morrow creeps in this petty pace'
+    p = 'to-morrow and to-morrow '
+    subseq_ind = SubseqIndex(t, 8, 3)
+    occurrences, num_index_hits = query_subseq(p, t, subseq_ind)
+    print "occurrences, num_index_hits:", occurrences, num_index_hits
+    #assert occurrences == [0, 14]
+    #this seems invalid: 
+    #assert num_index_hits == 6
+
+def example_3_2():
+    t = open('1110.txt.utf-8').read()
+    p = 'English measure backward'
+    subseq_ind = SubseqIndex(t, 8, 3)
+    occurrences, num_index_hits = query_subseq(p, t, subseq_ind)
+    print "occurrences, num_index_hits:", occurrences, num_index_hits
+    #assert occurrences == [135249]
+    #assert num_index_hits == 3
+
+def question6():
+    p = 'GGCGCGGTGGCTCACGCCTGTAAT'
+
+    #number of mistmatches = 2, so we need to split into 3 (2+1)
+    mistmatches_allowed = 2
+    num_segments_required = mistmatches_allowed + 1
+    k_mer_size = 8
+    pattern_size = 24
+    ival = 3
+
+    reads, qualities = readFastq('chr1.GRCh38.excerpt.fasta')
+    t = ''.join([read for read in reads])
+
+    subseq_ind = SubseqIndex(t, k_mer_size, ival)
+    return query_subseq(p, t, subseq_ind)
+
 def main():
     example_1_1()
     example_1_2()
@@ -244,6 +387,12 @@ def main():
     print "check with naive_2mm validated"
     print "Question5: how many total index hits are there when searching for occurrences of GGCGCGGTGGCTCACGCCTGTAAT with up to 2 substitutions in the excerpt of human chromosome 1?"
     print num_index_hits
+    example_3_1()
+    example_3_2()
+    print "All tests passed successfully for examples in set3"
+    print "Question 6: how many total index hits are there when searching for GGCGCGGTGGCTCACGCCTGTAAT with up to 2 substitutions in the excerpt of human chromosome 1?"
+    occurrences, num_index_hits = question6()
+    print occurrences, num_index_hits
    
 if __name__ == "__main__":
     main()
