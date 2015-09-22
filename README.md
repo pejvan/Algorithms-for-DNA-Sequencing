@@ -27,4 +27,4 @@ Question | Answer expected from Quiz | Answer from ProgrammingHomework2
 4        |   ?                       |       2
 5        |  90                       |       3
 6        |  79                       |       3
-RunTime  |  0m6.847s                 |  0m1.917s
+RunTime  |  0m6.847s                 |  0m1.917s and 0m1.159s w/o tests
