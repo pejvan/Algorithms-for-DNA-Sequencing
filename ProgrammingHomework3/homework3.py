@@ -88,14 +88,149 @@ def overlap(a, b, min_length=3):
             return len(a)-start
         start += 1  # move just past previous match
 
+def readFastq(filename):
+    sequences = []
+    qualities = []
+    with open(filename) as fh:
+        while True:
+            fh.readline()  # skip name line
+            seq = fh.readline().rstrip()  # read base sequence
+            fh.readline()  # skip placeholder line
+            qual = fh.readline().rstrip() # base quality line
+            if len(seq) == 0:
+                break
+            sequences.append(seq)
+            qualities.append(qual)
+    return sequences, qualities
+
+def overlap_all_pairs(reads, min_length):
+    from pprint import pprint
+    
+    overlaps = {}
+    overlap_pairs = []
+
+    #We use a Python dictionary to associate each k-mer with its corresponding set. 
+    suffixDict = {}
+    for read in reads:
+        kmers = getkmers(read, min_length)
+        print(kmers)
+        #(1) For every k-mer in a read, we add the read to the set object corresponding to that k-mer.
+        for kmer in kmers:
+            if not kmer in suffixDict.keys():
+                #Let every k-mer in the dataset have an associated Python set object, which starts out empty. 
+                suffixDict[kmer] = set()
+            suffixDict[kmer].add(read)
+    pprint(suffixDict)
+
+    #(2) Now, for each read a, we find all overlaps involving a suffix of a
+    for read in reads:
+        #we take a's length-k suffix,
+        suffix = read[-min_length:]
+        if len(suffix) < min_length:
+            continue
+
+        #find all reads containing that k-mer (obtained from the corresponding set) ...
+        matching_reads = suffixDict[suffix]
+
+        print("suffix", suffix)
+        print("matching_reads", matching_reads)
+
+        #...and call overlap(a, b, min_length=k) for each.
+        for read2 in matching_reads:
+            # The most important point is that we do not call overlap(a, b, min_length=k) if b does not contain the length-k suffix of a.
+            #if read2.find(suffix) >= 0 and read2 != suffix :
+            if read2.find(suffix) >= 0 and read2 != suffix :
+                val = overlap(suffix, read2, min_length) 
+                if val > 0:
+                    overlaps[ (read, read2) ] = val
+                    overlap_pairs.append( (read,read2) )
+
+    #pprint(overlaps)
+    #pprint(overlap_pairs)
+    return overlap_pairs
+
+
+def getkmers(read, kmer_length):
+    """our read is GATTA and k=3, we would add GATTA to the set objects for GAT, ATT and TTA."""
+    return [ read[i:i+kmer_length] for i in range(len(read)+1-kmer_length) ]
+
+def test2():
+    kmers = getkmers('GATTA', 3)
+    assert kmers == ['GAT', 'ATT', 'TTA']
+
+def example1():
+    reads = ['ABCDEFG', 'EFGHIJ', 'HIJABC']
+    assert overlap_all_pairs(reads, 3) == [('ABCDEFG', 'EFGHIJ'), ('EFGHIJ', 'HIJABC'), ('HIJABC', 'ABCDEFG')]
+    assert overlap_all_pairs(reads, 4) == []
+
+def example2():
+    from pprint import pprint
+
+    reads = ['CGTACG', 'TACGTA', 'GTACGT', 'ACGTAC', 'GTACGA', 'TACGAT']
+
+    results4 = overlap_all_pairs(reads, 4)
+    expected4 =         [('CGTACG', 'TACGTA'),
+                         ('CGTACG', 'GTACGT'),
+                         ('CGTACG', 'GTACGA'),
+                         ('CGTACG', 'TACGAT'),
+                         ('TACGTA', 'ACGTAC'),
+                         ('TACGTA', 'CGTACG'),
+                         ('GTACGT', 'TACGTA'),
+                         ('GTACGT', 'ACGTAC'),
+                         ('ACGTAC', 'GTACGA'),
+                         ('ACGTAC', 'GTACGT'),
+                         ('ACGTAC', 'CGTACG'),
+                         ('GTACGA', 'TACGAT')]
+
+    pprint('results4'), pprint(results4)
+    pprint('expected4'),pprint (expected4)
+
+    #assert results ==  expected4 , "example2, first assert failed"
+
+    results5 = overlap_all_pairs(reads, 5)
+    expected5 =         [('CGTACG', 'GTACGT'),
+                         ('CGTACG', 'GTACGA'),
+                         ('TACGTA', 'ACGTAC'),
+                         ('GTACGT', 'TACGTA'),
+                         ('ACGTAC', 'CGTACG'),
+                         ('GTACGA', 'TACGAT')] 
+
+    pprint('results5'), pprint(results5)
+    pprint('expected5'),pprint (expected5)
+
+    assert results5 ==  expected5, "example2, second assert failed"
+
+def question3and4(reads):
+    overlap_all_pairs(reads, 30)
+
+    """Picture the overlap graph corresponding to the overlaps just calculated. How many edges are in the graph? 
+    In other words, how many distinct pairs of reads overlap?"""
+    print('Question3: ')
+
+    """Picture the overlap graph corresponding to the overlaps computed for the previous question. 
+    How many nodes in this graph have at least one outgoing edge? (In other words, how many reads have a suffix involved in an overlap?)"""
+    print('Question4: ')
+
+    
 
 def main():
     test1()
     print("All tests completed successfully")
     genome = readGenome('chr1.GRCh38.excerpt.fasta')
-    question1(genome)
-    question2(genome)
+    #question1(genome)
+    #question2(genome)
+
+    test2()
+    #example1()
+    example2()
+    print("All example tests completed successfully")
+
+    reads, qualities = readFastq('ERR266411_1.for_asm.fastq')
+    #question3and4(reads)
+    print("All done")
     
+
+
 
 if __name__ == "__main__":
     main()
