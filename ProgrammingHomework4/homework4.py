@@ -125,6 +125,7 @@ def readFastq(filename):
     return sequences, qualities
 
 overlap_cache = {} # 
+best_overlap_cache = {} # 
 
 #copied from: http://nbviewer.ipython.org/github/Benlangmead/ads1-notebooks/blob/master/4.02_GreedySCS.ipynb
 def pick_maximal_overlap(reads, k):
@@ -135,11 +136,21 @@ def pick_maximal_overlap(reads, k):
     reada, readb = None, None
     best_olen = 0
     for a, b in itertools.permutations(reads, 2):
+        if k in best_overlap_cache.keys():
+
+            if (a,b) in best_overlap_cache[k].keys():
+                print("best_overlap_cache hit for k, (a,b): ", k, (a,b))
+                return a, b, best_overlap_cache[k][(a,b)]
+                print("result was: ", best_overlap_cache[k][(a,b)])
+
+        else:
+            best_overlap_cache[k] = {}
 
         if k not in overlap_cache.keys():
             overlap_cache[k] = {}
 
         if (a,b) in overlap_cache[k]:
+            print("overlap_cache hit for k, (a,b): ", k, (a,b))
             olen = overlap_cache[k][(a,b)]
         else:
             olen = overlap(a, b, min_length=k)
@@ -148,6 +159,8 @@ def pick_maximal_overlap(reads, k):
         if olen > best_olen:
             reada, readb = a, b
             best_olen = olen
+            best_overlap_cache[k][(a,b)]=best_olen
+
     return reada, readb, best_olen
 
 #copied from: http://nbviewer.ipython.org/github/Benlangmead/ads1-notebooks/blob/master/4.02_GreedySCS.ipynb
@@ -173,7 +186,7 @@ def question3and4():
     #print(len(reads))
     
     for i in range (10, 1, -1):
-        datetime.now()
+        print("timestamp: ", datetime.now())
         result = greedy_scs(reads, 10*i)
         print("found result which is {0} bases long".format( len(result) ) )
         
