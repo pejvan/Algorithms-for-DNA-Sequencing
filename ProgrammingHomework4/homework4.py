@@ -22,6 +22,6 @@ def scs(ss):
             olen = overlap(ssperm[i], ssperm[i+1], min_length=1)
             # add non-overlapping portion of B to superstring
             sup += ssperm[i+1][olen:]
-        if shortest_sup is None or len(sup) &lt; len(shortest_sup):
+        if shortest_sup is None or len(sup) < len(shortest_sup):
             shortest_sup = sup  # found shorter superstring
     return shortest_sup  # return shortest
