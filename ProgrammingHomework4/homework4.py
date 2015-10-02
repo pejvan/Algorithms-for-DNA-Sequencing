@@ -107,12 +107,91 @@ def question2():
     print(len(shortestList))
 
 
+def readFastq(filename):
+    sequences = []
+    qualities = []
+    with open(filename) as fh:
+        while True:
+            fh.readline()  # skip name line
+            seq = fh.readline().rstrip()  # read base sequence
+            fh.readline()  # skip placeholder line
+            qual = fh.readline().rstrip() # base quality line
+            if len(seq) == 0:
+                break
+            #All the reads are the same length (100 bases) 
+            assert len(seq) == 100
+            sequences.append(seq)
+            qualities.append(qual)
+    return sequences, qualities
+
+overlap_cache = {} # 
+
+#copied from: http://nbviewer.ipython.org/github/Benlangmead/ads1-notebooks/blob/master/4.02_GreedySCS.ipynb
+def pick_maximal_overlap(reads, k):
+    """ Return a pair of reads from the list with a
+        maximal suffix/prefix overlap >= k.  Returns
+        overlap length 0 if there are no such overlaps."""
+    import itertools
+    reada, readb = None, None
+    best_olen = 0
+    for a, b in itertools.permutations(reads, 2):
+
+        if k not in overlap_cache.keys():
+            overlap_cache[k] = {}
+
+        if (a,b) in overlap_cache[k]:
+            olen = overlap_cache[k][(a,b)]
+        else:
+            olen = overlap(a, b, min_length=k)
+            overlap_cache[k] = {(a,b):olen} 
+
+        if olen > best_olen:
+            reada, readb = a, b
+            best_olen = olen
+    return reada, readb, best_olen
+
+#copied from: http://nbviewer.ipython.org/github/Benlangmead/ads1-notebooks/blob/master/4.02_GreedySCS.ipynb
+def greedy_scs(reads, k):
+    """ Greedy shortest-common-superstring merge.
+        Repeat until no edges (overlaps of length >= k)
+        remain. """
+    read_a, read_b, olen = pick_maximal_overlap(reads, k)
+    while olen > 0:
+        reads.remove(read_a)
+        reads.remove(read_b)
+        reads.append(read_a + read_b[olen:])
+        read_a, read_b, olen = pick_maximal_overlap(reads, k)
+    return ''.join(reads)
+
+def validated_greedy_scs():
+    assert greedy_scs(['ABC', 'BCA', 'CAB'], 2) == 'CABCA'
+    assert greedy_scs(['ABCD', 'CDBC', 'BCDA'], 1) == 'CDBCABCDA'
+
+def question3and4():
+    from datetime import datetime
+    reads, qualities = readFastq('ads1_week4_reads.fq')
+    #print(len(reads))
+    
+    for i in range (10, 1, -1):
+        datetime.now()
+        result = greedy_scs(reads, 10*i)
+        print("found result which is {0} bases long".format( len(result) ) )
+        
+    # Hint: the virus genome you are assembling is exactly 15,894 bases long
+    #assert len(result) == 15894
+    print("Question3: ", result.count('A'))
+    print("Question4: ", result.count('T'))
+
 def main():
     test01()
     question1()
     example1()
     example2()
     question2()
+    validated_greedy_scs()
+
+    question3and4()
+    
 
 if __name__ == '__main__':
     main()
