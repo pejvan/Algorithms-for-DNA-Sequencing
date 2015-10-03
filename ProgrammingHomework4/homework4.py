@@ -139,7 +139,7 @@ def pick_maximal_overlap(reads, k):
         
         if (a,b) in overlap_cache.keys() and overlap_cache[(a,b)] >= k:
             overlap_len = overlap_cache[(a,b)]
-            print("overlap_cache hit for (a,b):", (a,b), "min was", k, "result was:", overlap_len, "cache size:", len(overlap_cache))
+            #print("overlap_cache hit for (a,b):", (a,b), "min was", k, "result was:", overlap_len, "cache size:", len(overlap_cache))
             return a, b, overlap_len
         else:
             olen = overlap(a, b, min_length=k)
@@ -167,7 +167,7 @@ def greedy_scs(reads, k):
         read_a, read_b, olen = pick_maximal_overlap(reads, k)
     
     lenCacheAfter = len(overlap_cache)
-    print("Cached {0} items during this pass".format(lenCacheAfter-lenCacheBefore))
+    #print("Cached {0} items during this pass".format(lenCacheAfter-lenCacheBefore))
 
     return ''.join(reads)
 
@@ -187,6 +187,18 @@ def question3and4():
     #print(len(reads))
     
     for i in range (30, 100):
+        print("timestamp: ", datetime.now())
+        result = greedy_scs(list(reads), i) #we make a copy of the reads as the greedy_scs modifies the list
+        print("Found result which is {0} bases long for k={1}".format( len(result), i ) )
+        
+        # Hint: the virus genome you are assembling is exactly 15,894 bases long
+        #assert len(result) == 15894
+        if len(result) == 15894:
+            print("Question3: ", result.count('A'))
+            print("Question4: ", result.count('T'))
+            return
+
+    for i in range (30, 1, -1):
         print("timestamp: ", datetime.now())
         result = greedy_scs(list(reads), i) #we make a copy of the reads as the greedy_scs modifies the list
         print("Found result which is {0} bases long for k={1}".format( len(result), i ) )
