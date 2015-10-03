@@ -184,12 +184,13 @@ def validated_greedy_scs():
 
 def question3and4():
     from datetime import datetime
+    
     reads, qualities = readFastq('ads1_week4_reads.fq')
     #print(len(reads))
     
     for i in range (30, 100):
         print("timestamp: ", datetime.now())
-        result = greedy_scs(reads, i)
+        result = greedy_scs(list(reads), i) #we make a copy of the reads as the greedy_scs modifies the list
         print("Found result which is {0} bases long for k={1}".format( len(result), i ) )
         
         # Hint: the virus genome you are assembling is exactly 15,894 bases long
