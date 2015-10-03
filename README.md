@@ -28,3 +28,9 @@ Question | Answer expected from Quiz | Answer from ProgrammingHomework2
 5        |  90                       |       3
 6        |  79                       |       3
 RunTime  |  6.847s                   |  1.917s and 1.159s w/o tests
+
+##Homework3
+Score 4/4
+
+##Homework4
+Score 4/4
