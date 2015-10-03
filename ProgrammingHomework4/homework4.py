@@ -125,7 +125,6 @@ def readFastq(filename):
     return sequences, qualities
 
 overlap_cache = {} # 
-best_overlap_cache = {} # 
 
 #copied from: http://nbviewer.ipython.org/github/Benlangmead/ads1-notebooks/blob/master/4.02_GreedySCS.ipynb
 def pick_maximal_overlap(reads, k):
@@ -135,31 +134,22 @@ def pick_maximal_overlap(reads, k):
     import itertools
     reada, readb = None, None
     best_olen = 0
+
     for a, b in itertools.permutations(reads, 2):
-        if k in best_overlap_cache.keys():
-
-            if (a,b) in best_overlap_cache[k].keys():
-                print("best_overlap_cache hit for k, (a,b): ", k, (a,b))
-                return a, b, best_overlap_cache[k][(a,b)]
-                print("result was: ", best_overlap_cache[k][(a,b)])
-
-        else:
-            best_overlap_cache[k] = {}
-
-        if k not in overlap_cache.keys():
-            overlap_cache[k] = {}
-
-        if (a,b) in overlap_cache[k]:
-            print("overlap_cache hit for k, (a,b): ", k, (a,b))
-            olen = overlap_cache[k][(a,b)]
+        
+        if (a,b) in overlap_cache.keys():
+            overlap_len = overlap_cache[(a,b)]
+            if overlap_len >= k :
+                print("overlap_cache hit for (a,b):", (a,b), "min was", k, "result was:", overlap_len, "cache size:", len(overlap_cache))
+                return a, b, overlap_len
+            
         else:
             olen = overlap(a, b, min_length=k)
-            overlap_cache[k] = {(a,b):olen} 
-
-        if olen > best_olen:
-            reada, readb = a, b
-            best_olen = olen
-            best_overlap_cache[k][(a,b)]=best_olen
+            #olen = overlap(a, b)
+            if olen > best_olen:
+                reada, readb = a, b
+                best_olen = olen
+                overlap_cache[(a,b)]=best_olen
 
     return reada, readb, best_olen
 
@@ -169,14 +159,14 @@ def greedy_scs(reads, k):
         Repeat until no edges (overlaps of length >= k)
         remain. """
     lenCacheBefore = len(overlap_cache)
-    read_a, read_b, olen = pick_maximal_overlap(reads, k, overlap_cache)
+    read_a, read_b, olen = pick_maximal_overlap(reads, k)
 
     while olen > 0:
         reads.remove(read_a)
         reads.remove(read_b)
         reads.append(read_a + read_b[olen:])
         
-        read_a, read_b, olen = pick_maximal_overlap(reads, k, overlap_cache)
+        read_a, read_b, olen = pick_maximal_overlap(reads, k)
     
     lenCacheAfter = len(overlap_cache)
     print("Cached {0} items during this pass".format(lenCacheAfter-lenCacheBefore))
@@ -184,8 +174,13 @@ def greedy_scs(reads, k):
     return ''.join(reads)
 
 def validated_greedy_scs():
-    assert greedy_scs(['ABC', 'BCA', 'CAB'], 2) == 'CABCA'
-    assert greedy_scs(['ABCD', 'CDBC', 'BCDA'], 1) == 'CDBCABCDA'
+    res1 = greedy_scs(['ABC', 'BCA', 'CAB'], 2)
+    #print('res1: ', res1)
+    assert res1 == 'CABCA'
+
+    res2 = greedy_scs(['ABCD', 'CDBC', 'BCDA'], 1)
+    #print('res2: ', res2)
+    assert res2 == 'CDBCABCDA'
 
 def question3and4():
     from datetime import datetime
