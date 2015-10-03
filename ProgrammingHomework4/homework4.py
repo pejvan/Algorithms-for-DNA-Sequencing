@@ -168,12 +168,19 @@ def greedy_scs(reads, k):
     """ Greedy shortest-common-superstring merge.
         Repeat until no edges (overlaps of length >= k)
         remain. """
-    read_a, read_b, olen = pick_maximal_overlap(reads, k)
+    lenCacheBefore = len(overlap_cache)
+    read_a, read_b, olen = pick_maximal_overlap(reads, k, overlap_cache)
+
     while olen > 0:
         reads.remove(read_a)
         reads.remove(read_b)
         reads.append(read_a + read_b[olen:])
-        read_a, read_b, olen = pick_maximal_overlap(reads, k)
+        
+        read_a, read_b, olen = pick_maximal_overlap(reads, k, overlap_cache)
+    
+    lenCacheAfter = len(overlap_cache)
+    print("Cached {0} items during this pass".format(lenCacheAfter-lenCacheBefore))
+
     return ''.join(reads)
 
 def validated_greedy_scs():
@@ -185,15 +192,17 @@ def question3and4():
     reads, qualities = readFastq('ads1_week4_reads.fq')
     #print(len(reads))
     
-    for i in range (10, 1, -1):
+    for i in range (30, 100):
         print("timestamp: ", datetime.now())
-        result = greedy_scs(reads, 10*i)
-        print("found result which is {0} bases long".format( len(result) ) )
+        result = greedy_scs(reads, i)
+        print("Found result which is {0} bases long for k={1}".format( len(result), i ) )
         
-    # Hint: the virus genome you are assembling is exactly 15,894 bases long
-    #assert len(result) == 15894
-    print("Question3: ", result.count('A'))
-    print("Question4: ", result.count('T'))
+        # Hint: the virus genome you are assembling is exactly 15,894 bases long
+        #assert len(result) == 15894
+        if len(result) == 15894:
+            print("Question3: ", result.count('A'))
+            print("Question4: ", result.count('T'))
+            return
 
 def main():
     test01()
