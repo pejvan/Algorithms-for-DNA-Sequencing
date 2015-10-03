@@ -170,28 +170,28 @@ def example2():
     reads = ['CGTACG', 'TACGTA', 'GTACGT', 'ACGTAC', 'GTACGA', 'TACGAT']
 
     results4, overlap_map4, overlap_graph4 = overlap_all_pairs(reads, 4)
-    expected4 =         [('CGTACG', 'TACGTA'),
-                         ('CGTACG', 'GTACGT'),
-                         ('CGTACG', 'GTACGA'),
-                         ('CGTACG', 'TACGAT'),
-                         ('TACGTA', 'ACGTAC'),
-                         ('TACGTA', 'CGTACG'),
-                         ('GTACGT', 'TACGTA'),
-                         ('GTACGT', 'ACGTAC'),
-                         ('ACGTAC', 'GTACGA'),
-                         ('ACGTAC', 'GTACGT'),
-                         ('ACGTAC', 'CGTACG'),
-                         ('GTACGA', 'TACGAT')]
+    expected4 = [('CGTACG', 'TACGTA'),
+                 ('CGTACG', 'GTACGT'),
+                 ('CGTACG', 'GTACGA'),
+                 ('CGTACG', 'TACGAT'),
+                 ('TACGTA', 'ACGTAC'),
+                 ('TACGTA', 'CGTACG'),
+                 ('GTACGT', 'TACGTA'),
+                 ('GTACGT', 'ACGTAC'),
+                 ('ACGTAC', 'GTACGA'),
+                 ('ACGTAC', 'GTACGT'),
+                 ('ACGTAC', 'CGTACG'),
+                 ('GTACGA', 'TACGAT')]
 
     assert sorted(results4) ==  sorted(expected4) , "example2, first assert failed"
 
     results5, overlap_map5, overlap_graph5 = overlap_all_pairs(reads, 5)
-    expected5 =         [('CGTACG', 'GTACGT'),
-                         ('CGTACG', 'GTACGA'),
-                         ('TACGTA', 'ACGTAC'),
-                         ('GTACGT', 'TACGTA'),
-                         ('ACGTAC', 'CGTACG'),
-                         ('GTACGA', 'TACGAT')] 
+    expected5 = [('CGTACG', 'GTACGT'),
+                 ('CGTACG', 'GTACGA'),
+                 ('TACGTA', 'ACGTAC'),
+                 ('GTACGT', 'TACGTA'),
+                 ('ACGTAC', 'CGTACG'),
+                 ('GTACGA', 'TACGAT')] 
 
     assert sorted(results5) ==  sorted(expected5), "example2, second assert failed"
 
