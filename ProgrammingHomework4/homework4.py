@@ -137,12 +137,10 @@ def pick_maximal_overlap(reads, k):
 
     for a, b in itertools.permutations(reads, 2):
         
-        if (a,b) in overlap_cache.keys():
+        if (a,b) in overlap_cache.keys() and overlap_cache[(a,b)] >= k:
             overlap_len = overlap_cache[(a,b)]
-            if overlap_len >= k :
-                print("overlap_cache hit for (a,b):", (a,b), "min was", k, "result was:", overlap_len, "cache size:", len(overlap_cache))
-                return a, b, overlap_len
-            
+            print("overlap_cache hit for (a,b):", (a,b), "min was", k, "result was:", overlap_len, "cache size:", len(overlap_cache))
+            return a, b, overlap_len
         else:
             olen = overlap(a, b, min_length=k)
             #olen = overlap(a, b)
