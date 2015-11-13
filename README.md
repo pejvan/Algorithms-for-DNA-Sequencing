@@ -17,7 +17,7 @@ the number of character comparisons... which `homework2.py` actually does: it do
 the actual pattern matching is concerned :-)
 
 While I have not tried to optimise nor to do any kinds of clever tricks, and while `homework2.py` does fairly more 
-than expected (many validations, tests, etc.) in an unoptimised way, it's stay much much faster than the expected code. 
+than expected (many validations, tests, etc.) in an unoptimised way, it's still much faster than the expected code. 
 
 Question | Answer expected from Quiz | Answer from ProgrammingHomework2
 -------- | --------------------------| ---------------------------------
